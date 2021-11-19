@@ -5,15 +5,15 @@ from collections import deque
 class Graph:
     def __init__(self, nodes=None):
         self.nodes = set()
-        if nodes is set or nodes is list:
-            self.nodes = self.nodes.union(set(nodes))
+        self.add_nodes(nodes)
 
     def add_node(self, node) -> None:
-        self.nodes.add(node)
+        if isinstance(node, Node):
+            self.nodes.add(node)
 
     def add_nodes(self, nodes) -> None:
-        nodes = set(nodes)
-        self.nodes = self.nodes.union(set(nodes))
+        if isinstance(nodes, (list, set, tuple)):
+            self.nodes = self.nodes.union(set(nodes))
 
     def print_nodes(self) -> None:
         for node in list(self.nodes):
@@ -105,28 +105,31 @@ class Graph:
 
 class Node:
     def __init__(self, label, edges=None):
-        self.label = label
+        self.label = str(label)
         self.edges = set()
-        if edges is set or edges is list:
+        if isinstance(edges, (list, set, tuple)):
             self.edges = self.edges.union(set(edges))
 
     def add_edge(self, node) -> None:
-        self.edges.add(node)
-        node.edges.add(self)
+        if isinstance(node, Node):
+            self.edges.add(node)
+            node.edges.add(self)
 
     def remove_edge(self, node) -> None:
-        self.edges.remove(node)
-        node.edges.remove(self)
+        if isinstance(node, Node):
+            self.edges.remove(node)
+            node.edges.remove(self)
 
     def add_edges(self, nodes) -> None:
-        self.edges = self.edges.union(set(nodes))
-        for node in nodes:
-            node.add_edge(self)
+        if isinstance(nodes, (list, set, tuple)):
+            self.edges = self.edges.union(set(nodes))
+            for node in nodes:
+                node.add_edge(self)
 
     def get_edge_names(self) -> str:
         labels = list()
         for edge in list(self.edges):
-            labels.append(edge.label)
+            labels.append(str(edge.label))
         if self.edges:
             return ", ".join(labels)
         else:
@@ -139,18 +142,29 @@ class Node:
         return False
 
 
+def node_dict_to_list(nodes: dict) -> list:
+    # Node labels must have keys arranged in: 0, 1, 2, ..., n-1
+    if isinstance(nodes, dict):
+        dict_len = len(nodes.keys())
+        result = [Node(i) for i in range(dict_len)]
+        for label, neighbors in nodes.items():
+            for neighbor in neighbors:
+                result[label].add_edge(result[neighbor])
+        return result
+
+
 def example_one():
-    graph = Graph()
-    nodes = [Node('0'), Node('1'), Node('2'), Node('3'), Node('4'), Node('5')]
+    nodes = {
+        0: (1, 2),
+        1: (0, 2, 3, 4),
+        2: (0, 1, 3, 5),
+        3: (1, 2, 4, 5),
+        4: (1, 3, 5),
+        5: (2, 3, 4)
+    }
+    nodes = node_dict_to_list(nodes)
 
-    nodes[0].add_edges({nodes[1], nodes[2]})
-    nodes[1].add_edges({nodes[0], nodes[2], nodes[3], nodes[4]})
-    nodes[2].add_edges({nodes[0], nodes[1], nodes[3], nodes[5]})
-    nodes[3].add_edges({nodes[1], nodes[2], nodes[4], nodes[5]})
-    nodes[4].add_edges({nodes[1], nodes[3], nodes[5]})
-    nodes[5].add_edges({nodes[2], nodes[3], nodes[4]})
-
-    graph.add_nodes(nodes)
+    graph = Graph(nodes)
     print("Example One")
     path = graph.get_fleury_path()
     print(r"""
@@ -166,13 +180,15 @@ def example_one():
 
 
 def example_two():
-    graph = Graph()
-    nodes = [Node('0'), Node('1'), Node('2'), Node('3')]
-    nodes[0].add_edges({nodes[1], nodes[2]})
-    nodes[1].add_edges({nodes[0], nodes[3]})
-    nodes[2].add_edges({nodes[0], nodes[3]})
-    nodes[3].add_edges({nodes[1], nodes[2]})
-    graph.add_nodes(nodes)
+    nodes = {
+        0: (1, 2),
+        1: (0, 3),
+        2: (0, 3),
+        3: (1, 2)
+    }
+    nodes = node_dict_to_list(nodes)
+
+    graph = Graph(nodes)
     print("Example Two")
     path = graph.get_fleury_path()
     print(r"""
@@ -184,31 +200,32 @@ def example_two():
 
 
 def example_three():
-    graph = Graph()
-    nodes = [Node(str(i)) for i in range(21)]
-    nodes[0].add_edges({nodes[1], nodes[2], nodes[3], nodes[4]})
-    nodes[1].add_edges({nodes[0], nodes[2]})
-    nodes[2].add_edges({nodes[0], nodes[1]})
-    nodes[3].add_edges({nodes[0], nodes[5]})
-    nodes[4].add_edges({nodes[0], nodes[5], nodes[11]})
-    nodes[5].add_edges({nodes[3], nodes[6], nodes[4],
-                       nodes[8], nodes[9], nodes[10]})
-    nodes[6].add_edges({nodes[5], nodes[7]})
-    nodes[7].add_edges({nodes[6], nodes[8]})
-    nodes[8].add_edges({nodes[5], nodes[7], nodes[9], nodes[15]})
-    nodes[9].add_edges({nodes[5], nodes[8], nodes[10], nodes[14], nodes[15]})
-    nodes[10].add_edges({nodes[5], nodes[9], nodes[11], nodes[13]})
-    nodes[11].add_edges({nodes[4], nodes[10], nodes[12]})
-    nodes[12].add_edges({nodes[11], nodes[13]})
-    nodes[13].add_edges({nodes[10], nodes[11], nodes[12], nodes[14]})
-    nodes[14].add_edges({nodes[9], nodes[13]})
-    nodes[15].add_edges({nodes[8], nodes[9], nodes[16], nodes[19]})
-    nodes[16].add_edges({nodes[9], nodes[15], nodes[17], nodes[18]})
-    nodes[17].add_edges({nodes[16], nodes[18]})
-    nodes[18].add_edges({nodes[16], nodes[17], nodes[19], nodes[20]})
-    nodes[19].add_edges({nodes[15], nodes[18], nodes[20]})
-    nodes[20].add_edges({nodes[18], nodes[19]})
-    graph.add_nodes(nodes)
+    nodes = {
+        0: (1, 2, 3, 4),
+        1: (0, 2),
+        2: (0, 1),
+        3: (0, 5),
+        4: (0, 5, 11),
+        5: (3, 4, 6, 8, 9, 10),
+        6: (5, 7),
+        7: (6, 8),
+        8: (5, 7, 9, 15),
+        9: (5, 8, 10, 14, 15),
+        10: (5, 9, 11, 13),
+        11: (4, 10, 12),
+        12: (11, 13),
+        13: (10, 11, 12, 14),
+        14: (9, 13),
+        15: (8, 9, 16, 19),
+        16: (9, 15, 17, 18),
+        17: (16, 18),
+        18: (16, 17, 19, 20),
+        19: (15, 18, 20),
+        20: (18, 19)
+    }
+    nodes = node_dict_to_list(nodes)
+
+    graph = Graph(nodes)
     print("Example Three (Game Puzzle 1)")
     print("https://git.io/J16OK")
     path = graph.get_fleury_path()
