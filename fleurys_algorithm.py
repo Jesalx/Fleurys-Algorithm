@@ -71,15 +71,14 @@ class Graph:
         print(f"Has cycle: {has_cycle}")
         print(f"Has path: {has_path}")
         if not has_path and not has_cycle:
-            return
+            return []
 
         path = []
-
         edgeless = set()
 
         if has_cycle:
             current = random.choice(list(self.nodes))
-        elif has_path:
+        else:
             for node in random.sample(self.nodes, len(self.nodes)):
                 if not node.is_even_degree():
                     current = node
